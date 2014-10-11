@@ -47,3 +47,5 @@ $feed = curl_init();
 curl_setopt_array($feed, $curlopts);
 curl_exec($feed);
 curl_close($feed);
+
+?>
