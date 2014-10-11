@@ -41,12 +41,9 @@ function generate_bearer_token($key, $secret) {
 $curlopts = array( 
     CURLOPT_HTTPHEADER => array("Authorization: Bearer ".generate_bearer_token($consumer_key, $consumer_secret).""),
     CURLOPT_URL => "https://api.twitter.com/1.1/statuses/user_timeline.json?" . http_build_query($request),
-    CURLOPT_RETURNTRANSFER => true,
     CURLOPT_SSL_VERIFYPEER => false
 );
 $feed = curl_init();
 curl_setopt_array($feed, $curlopts);
-$json = curl_exec($feed);
+curl_exec($feed);
 curl_close($feed);
-echo $json;
-
