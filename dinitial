@@ -1,0 +1,67 @@
+#!/bin/bash
+
+######################################
+#                                    #
+# dinitial - new server setup script #
+#                                    #
+######################################
+
+file /root/.dinitial.lock &>/dev/null && exit 1
+
+#### Something patrick told me to do. ####
+sed -i.$(date +%s) 's/elevator=\S\+\s*//g;s/nohz=\S\+\s*//g;/kernel/s/$/ elevator=noop nohz=off/g' /boot/grub/grub.conf
+
+## Staging directory setup and navigation
+mkdir -p /usr/src/dinitial;
+cd /usr/src/dinitial;
+
+#### Initialize repos ####
+## nginx
+cat << EOF > /etc/yum.repos.d/nginx.repo
+[nginx]
+name=nginx repo
+baseurl=http://nginx.org/packages/centos/$releasever/$basearch/
+gpgcheck=0
+enabled=1
+EOF
+
+## epel
+yum localinstall http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+
+## pgdg
+baseN=$(($(grep -n "\[base\]" /etc/yum.repos.d/CentOS-Base.repo | cut -d: -f1) + 1))
+updateN=$(($(grep -n "\[updates\]" /etc/yum.repos.d/CentOS-Base.repo | cut -d: -f1) + 1))
+
+sed -i\
+-e "${baseN}i\
+exclude=postgresql*\
+"\
+-e "${updateN}i\
+exclude=postgresql*\
+" /etc/yum.repos.d/CentOS-Base.repo
+
+yum localinstall http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-1.noarch.rpm
+
+#### Update everything ####
+yum -y update
+
+#### List the packages we want to install. ####
+packages=(
+"nginx"
+"postgresql93"
+"mysql55"
+"redis"
+"memcached"
+"postfix"
+"dovecot"
+"npm"
+"htop"
+)
+
+#### Install EVERYTHING. ####
+yum -y install ${packages[@]}
+
+#### Cleanup ####
+cd $OLDPWD;
+rm -fr /usr/src/dinitial
+touch /root/.dinitial.lock
